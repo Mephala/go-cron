@@ -2,8 +2,12 @@ package thunderbird
 
 import (
 	"fmt"
+	fileOps "go-cron/main/util"
 	"io/ioutil"
 	"log"
+	"os"
+	"path"
+	//"os"
 )
 
 const (
@@ -28,13 +32,23 @@ func (thunderbird Thunderbird) Backup() {
 		log.Fatal(err)
 	}
 
-	var filterFound = false
+	var filterFileInfo os.FileInfo
 	for _, f := range files {
 		if f.Name() == MsgFiltersFileName {
-			filterFound = true
+			filterFileInfo = f
 		}
 	}
-	if !filterFound {
+	if filterFileInfo == nil {
 		log.Fatal("No file named \"%s\" found in given thunderbird filter folder", MsgFiltersFileName)
 	}
+
+	var filterFileAbsolutePath = path.Join(thunderbird.folderLoc, MsgFiltersFileName)
+	var backupFileAbsolutePath = path.Join(thunderbird.backupLoc, MsgFiltersFileName)
+
+	fileOps.RenameIfNecessary(backupFileAbsolutePath)
+	err = fileOps.Copy(filterFileAbsolutePath, backupFileAbsolutePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("Thunderbird backup operation completed without any errors.")
 }
